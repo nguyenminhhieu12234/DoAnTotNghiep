@@ -105,17 +105,23 @@ namespace Api_CongThanhStore.Controllers
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
                 var SignIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
                 var token = new JwtSecurityToken(_configuration["Jwt:Issuer"], _configuration["Jwt:Audience"], claims, expires: DateTime.UtcNow.AddDays(1), signingCredentials: SignIn);
-                return ResponeModel<object>.Success(new JwtSecurityTokenHandler().WriteToken(token));
+                LoginRespone respone = new LoginRespone();
+                respone.Token = new JwtSecurityTokenHandler().WriteToken(token);
+                respone.UserName = checkUser.UserName;
+                respone.AvatarPath = checkUser.Avatar;
+                var getRole = await _userManager.GetRolesAsync(checkUser);
+                respone.Role = getRole[0];
+                return ResponeModel<object>.Success(respone);
             }
             return ResponeModel<object>.Failed("Đăng nhập không thành công");
         }
 
-        [HttpGet("filterusers")]
-        public async Task<ResponeModel<object>> FilterUsers(string keyword, int positionId = 0, int statusId = 0)
+        [HttpGet("get-users")]
+        public async Task<ResponeModel<object>> GetUsers(string keyword, int positionId = 0, int statusId = 0)
         {
             try
             {
-                var result = _DbContext.Users
+                    var result = _DbContext.Users
                     .Include(x => x.UserRoles).ThenInclude(x => x.Role)
                     .Where(delegate (UserEntity x)
                     {
@@ -132,9 +138,10 @@ namespace Api_CongThanhStore.Controllers
                         x.Id,
                         x.FullName,
                         x.PhoneNumber,
-                        x.LockoutEnabled,
+                        x.Status,
                         x.Email,
                         x.Avatar,
+                        x.UserName,
                         x.UserRoles.Select(x => x.Role).ToList().FirstOrDefault().Name
                     }).ToList();
 
@@ -146,7 +153,7 @@ namespace Api_CongThanhStore.Controllers
             }
         }
 
-        [HttpPost("lockaccount/{id}")]
+        [HttpPost("lock-account/{id}")]
         public async Task<ResponeModel<object>> LockAccount(string id)
         {
             try
@@ -166,7 +173,7 @@ namespace Api_CongThanhStore.Controllers
 
         }
 
-        [HttpPost("unlockaccount/{id}")]
+        [HttpPost("unlock-account/{id}")]
         public async Task<ResponeModel<object>> UnlockAccount(string id)
         {
             try
@@ -186,7 +193,7 @@ namespace Api_CongThanhStore.Controllers
 
         }
 
-        [HttpPost("updateuser/{id}")]
+        [HttpPost("update-user/{id}")]
         public async Task<ResponeModel<object>> UpdateUser(RegisterRequest userdata, int? id)
         {
             try
@@ -194,6 +201,10 @@ namespace Api_CongThanhStore.Controllers
                 var result = _DbContext.Users
                     .Include(x => x.UserRoles).ThenInclude(x => x.Role)
                     .FirstOrDefault(x => x.Id == id);
+
+                var checkUserName = await _userManager.FindByNameAsync(result.UserName);
+                if (checkUserName != null)
+                    return ResponeModel<object>.Failed("Tên tài khoản đã tồn tại");
 
                 userdata.CopyTo(result);
                 result.UpdatedDate = DateTime.Now;

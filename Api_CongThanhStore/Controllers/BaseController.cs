@@ -1,5 +1,6 @@
 ﻿using Api_CongThanhStore.Data;
 using Api_CongThanhStore.Models.General;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,5 +23,6 @@ namespace Api_CongThanhStore.Controllers
         public IConfiguration _configuration { get; set; }
         public SignInManager<UserEntity> _signInManager { get; set; }
         public ApplicationDbContext _DbContext { get; set; }
+        public IWebHostEnvironment _WebHostEnviroment { get; set; }
     }
 }
