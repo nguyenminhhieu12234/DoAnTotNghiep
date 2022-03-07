@@ -38,6 +38,27 @@ namespace Api_CongThanhStore
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api_CongThanhStore", Version = "v1" });
+                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme 
+                {
+                    Description = "",
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    Scheme = "bearer",
+                    Type = SecuritySchemeType.Http
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
+                    {
+                        new OpenApiSecurityScheme{
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "basicAuth"
+                            }
+                        },
+                        new List<string>()
+                    }
+                });
+                
             });
 
             services.AddDbContext<ApplicationDbContext>(options => {

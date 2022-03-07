@@ -97,10 +97,11 @@ namespace Api_CongThanhStore.Controllers
                     new Claim(JwtRegisteredClaimNames.Sub, _configuration["Jwt:Subject"]),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(JwtRegisteredClaimNames.Iat, DateTime.Now.ToString()),
-                    new Claim("UserName", checkUser.UserName),
-                    new Claim("Email", checkUser.Email),
-                    new Claim("Avatar", checkUser.Avatar),
-                    new Claim("PhoneNumber", checkUser.PhoneNumber)
+                    new Claim(ClaimsTypes.UserId, checkUser.Id.ToString()),
+                    new Claim(ClaimsTypes.UserName, checkUser.UserName),
+                    new Claim(ClaimsTypes.Email, checkUser.Email),
+                    new Claim(ClaimsTypes.Avatar, checkUser.Avatar),
+                    new Claim(ClaimsTypes.PhoneNumber, checkUser.PhoneNumber)
                 };
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
                 var SignIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

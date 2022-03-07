@@ -1,5 +1,6 @@
 ﻿using Api_CongThanhStore.Data;
 using Api_CongThanhStore.Models.General;
+using Api_CongThanhStore.Shared.Extensions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Api_CongThanhStore.Controllers
@@ -16,6 +18,9 @@ namespace Api_CongThanhStore.Controllers
     [ApiController]
     public class BaseController : ControllerBase
     {
+
+        protected int CurrentUser => Convert.ToInt32(HttpContext.Items[ClaimsTypes.UserId].ToString());
+
         public BaseController() { }
 
         public UserManager<UserEntity> _userManager { get; set; }
@@ -24,5 +29,6 @@ namespace Api_CongThanhStore.Controllers
         public SignInManager<UserEntity> _signInManager { get; set; }
         public ApplicationDbContext _DbContext { get; set; }
         public IWebHostEnvironment _WebHostEnviroment { get; set; }
+       
     }
 }
