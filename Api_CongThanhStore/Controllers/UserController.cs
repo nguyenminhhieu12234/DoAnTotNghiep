@@ -3,6 +3,7 @@ using Api_CongThanhStore.Models.General;
 using Api_CongThanhStore.Shared.Extensions;
 using Api_CongThanhStore.Shared.General;
 using Api_CongThanhStore.Shared.Models;
+using Api_CongThanhStore.Shared.Models.Users;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -85,10 +86,8 @@ namespace Api_CongThanhStore.Controllers
                 return ResponeModel<object>.Failed("Tên đăng nhập hoặc mất khẩu không chính xác !!!");
             var listRole = await _userManager.GetRolesAsync(checkUser);
             var resultRole = listRole.Where(x => x == "Admin").FirstOrDefault();
-            var result = await _signInManager.PasswordSignInAsync(checkUser,user.Password,false,false);
-            if (result.IsNotAllowed)
-                return ResponeModel<object>.Failed("Bạn chưa xác thực tài khoản này");
-            else if (result.IsLockedOut)
+            var result = await _signInManager.PasswordSignInAsync(checkUser,user.Password,false,lockoutOnFailure: true);
+            if (result.IsLockedOut)
                 return ResponeModel<object>.Failed("Tài khoản này đã bị khóa");
             else if(result.Succeeded)
             {
@@ -153,15 +152,29 @@ namespace Api_CongThanhStore.Controllers
                 return ResponeModel<object>.Failed(ex.Message);
             }
         }
+        
+        [HttpGet("get-user/{id}")]
+        public async Task<ResponeModel<object>> GetUser(int id)
+        {
+            var result = _DbContext.Users
+                .Include(x => x.UserRoles).ThenInclude(x => x.Role)
+                .Where(x => x.Id == id)
+                .Select(x => new UserRespone(x))
+                .SingleOrDefault();
+            if (result != null)
+                return ResponeModel<object>.Success(result);
+            return ResponeModel<object>.Failed("Không thể lấy người dùng theo yêu cầu");
+        }
 
-        [HttpPost("lock-account/{id}")]
+        [HttpPatch("lock-account/{id}")]
         public async Task<ResponeModel<object>> LockAccount(string id)
         {
             try
             {
                 var user = await _userManager.FindByIdAsync(id);
-                var result = await _userManager.SetLockoutEnabledAsync(user, false);
+                var result = await _userManager.SetLockoutEnabledAsync(user, true);
                 user.Status = UserEntity.UserStatus.LockDown;
+                var test = user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
                 await _DbContext.SaveChangesAsync();
                 if (result.Succeeded)
                     return ResponeModel<object>.Success();
@@ -174,13 +187,13 @@ namespace Api_CongThanhStore.Controllers
 
         }
 
-        [HttpPost("unlock-account/{id}")]
+        [HttpPatch("unlock-account/{id}")]
         public async Task<ResponeModel<object>> UnlockAccount(string id)
         {
             try
             {
                 var user = await _userManager.FindByIdAsync(id);
-                var result = await _userManager.SetLockoutEnabledAsync(user, true);
+                var result = await _userManager.SetLockoutEnabledAsync(user, false);
                 user.Status = UserEntity.UserStatus.Active;
                 await _DbContext.SaveChangesAsync();
                 if (result.Succeeded)
@@ -194,7 +207,7 @@ namespace Api_CongThanhStore.Controllers
 
         }
 
-        [HttpPost("update-user/{id}")]
+        [HttpPut("update-user/{id}")]
         public async Task<ResponeModel<object>> UpdateUser(RegisterRequest userdata, int? id)
         {
             try
@@ -203,7 +216,7 @@ namespace Api_CongThanhStore.Controllers
                     .Include(x => x.UserRoles).ThenInclude(x => x.Role)
                     .FirstOrDefault(x => x.Id == id);
 
-                var checkUserName = await _userManager.FindByNameAsync(result.UserName);
+                var checkUserName = await _userManager.FindByNameAsync(userdata.UserName);
                 if (checkUserName != null)
                     return ResponeModel<object>.Failed("Tên tài khoản đã tồn tại");
 
@@ -227,6 +240,32 @@ namespace Api_CongThanhStore.Controllers
             {
                 return ResponeModel<object>.Failed(ex.Message);
             }
+        }
+
+        [HttpPatch("reset-password/{id}")]
+        public async Task<ResponeModel<object>> ResetPassword(string id, string newPassword)
+        {
+            var user = await _userManager.FindByIdAsync(id);
+            var result = await _userManager.RemovePasswordAsync(user);
+            if(result.Succeeded)
+            {
+                result = await _userManager.AddPasswordAsync(user, newPassword);
+                if (result.Succeeded)
+                    return ResponeModel<object>.Success("Cập nhật mật khẩu thành công");
+                return ResponeModel<object>.Failed("Reset mật khẩu thất bại");
+            }
+            return ResponeModel<object>.Failed("Reset mật khẩu thất bại");
+        }
+        #endregion
+
+        #region Roles
+        [HttpGet("get-roles")]
+        public async Task<ResponeModel<object>> GetRoles()
+        {
+            var roles = _DbContext.Roles.Select(x => new { x.Name, x.Id}).ToList();
+            if (roles != null)
+                return ResponeModel<object>.Success(roles);
+            return ResponeModel<object>.Failed("không có chức vụ nào");
         }
         #endregion
     }

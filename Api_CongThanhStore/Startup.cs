@@ -1,4 +1,4 @@
-using Api_CongThanhStore.Data;
+﻿using Api_CongThanhStore.Data;
 using Api_CongThanhStore.Shared.Extensions;
 using Api_CongThanhStore.Middleware;
 using Api_CongThanhStore.Models.General;
@@ -38,26 +38,6 @@ namespace Api_CongThanhStore
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Api_CongThanhStore", Version = "v1" });
-                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme 
-                {
-                    Description = "",
-                    In = ParameterLocation.Header,
-                    Name = "Authorization",
-                    Scheme = "bearer",
-                    Type = SecuritySchemeType.Http
-                });
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement {
-                    {
-                        new OpenApiSecurityScheme{
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "basicAuth"
-                            }
-                        },
-                        new List<string>()
-                    }
-                });
                 
             });
 
@@ -72,6 +52,12 @@ namespace Api_CongThanhStore
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredUniqueChars = 0;
                 options.Password.RequireUppercase = false;
+
+                // Cấu hình khóa tài khoản
+                options.Lockout.AllowedForNewUsers = true;
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+
             }).AddRoles<RoleEntity>()
             .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 

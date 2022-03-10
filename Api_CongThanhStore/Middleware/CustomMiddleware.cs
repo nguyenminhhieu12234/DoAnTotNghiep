@@ -88,6 +88,10 @@ namespace Api_CongThanhStore.Middleware
                 var jsonToken = (JwtSecurityToken)validatedToken;
 
                 context.Items[ClaimsTypes.UserId] = jsonToken.Claims.Where(x => x.Type == ClaimsTypes.UserId).FirstOrDefault().Value;
+                context.Items[ClaimsTypes.UserName] = jsonToken.Claims.Where(x => x.Type == ClaimsTypes.UserName).FirstOrDefault().Value;
+                context.Items[ClaimsTypes.Avatar] = jsonToken.Claims.Where(x => x.Type == ClaimsTypes.Avatar).FirstOrDefault().Value;
+                context.Items[ClaimsTypes.Email] = jsonToken.Claims.Where(x => x.Type == ClaimsTypes.Email).FirstOrDefault().Value;
+                context.Items[ClaimsTypes.PhoneNumber] = jsonToken.Claims.Where(x => x.Type == ClaimsTypes.PhoneNumber).FirstOrDefault().Value;
             }
         }
     }
