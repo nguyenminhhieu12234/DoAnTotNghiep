@@ -90,7 +90,7 @@ namespace Api_CongThanhStore.Controllers
             }
             catch(Exception ex)
             {
-                return ResponeModel<object>.Failed(ex.Message);
+                return ResponeModel<object>.Failed("Có lỗi không thể thêm bài viết được");
             }
         }
 
@@ -99,20 +99,43 @@ namespace Api_CongThanhStore.Controllers
         {
             try
             {
-                var result = _DbContext.Post.Include(x => x.PostCategory)
-                    .Where(delegate (PostEntity x)
-                    {
-                        return (x.Title.Like(keyword))
-                        && (x.PostCategory.Id == categoryId || categoryId == 0);
-                    })
-                    .OrderByDescending(x => x.CreatedDate)
-                    .Take(numberItem)
-                    .Select(x => new PostRespone(x, _DbContext))
-                    .ToList();
+                using (_DbContext)
+                {
+                    var result = _DbContext.Post.Include(x => x.PostCategory)
+                        .Where(delegate (PostEntity x)
+                        {
+                            return (x.Title.Like(keyword))
+                            && (x.PostCategory.Id == categoryId || categoryId == 0);
+                        })
+                        .OrderByDescending(x => x.CreatedDate)
+                        .Take(numberItem)
+                        .Select(x => new PostRespone(x, _DbContext))
+                        .ToList();
 
+                    if (result != null)
+                        return ResponeModel<object>.Success(result);
+                    return ResponeModel<object>.Failed("Không thể lấy danh sách tin tức");
+                }
+            }
+            catch(Exception ex)
+            {
+                return ResponeModel<object>.Failed(ex.Message);
+            }
+        }
+
+        [HttpGet("get-post/{id}")]
+        public async Task<ResponeModel<object>> GetPost(int id)
+        {
+            try
+            {
+                var result = _DbContext.Post
+                    .Include(x => x.PostCategory)
+                    .Include(x => x.Banner)
+                    .Where(x => x.Id == id)
+                    .Select(x => new PostRespone(x, _DbContext, id)).SingleOrDefault();
                 if (result != null)
                     return ResponeModel<object>.Success(result);
-                return ResponeModel<object>.Failed("Không thể lấy danh sách tin tức");
+                return ResponeModel<object>.Failed("Lỗi không thể lấy tin tức");
             }
             catch(Exception ex)
             {

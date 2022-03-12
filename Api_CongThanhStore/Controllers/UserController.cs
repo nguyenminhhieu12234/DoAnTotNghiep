@@ -208,7 +208,7 @@ namespace Api_CongThanhStore.Controllers
         }
 
         [HttpPut("update-user/{id}")]
-        public async Task<ResponeModel<object>> UpdateUser(RegisterRequest userdata, int? id)
+        public async Task<ResponeModel<object>> UpdateUser(UpdateUserRequest userdata, int? id)
         {
             try
             {
